@@ -17,6 +17,6 @@ float LinearizeDepth(float depth)
 
 void main() {
 //	outColor = uColor;
-	outColor = vec4((1 - LinearizeDepth(gl_FragCoord.z) / 4) * uColor.rgb, 1.0);
+	outColor = vec4((1 - LinearizeDepth(gl_FragCoord.z) / 6) * uColor.rgb, uColor.a);
 }
 

@@ -1,4 +1,3 @@
-
 #include <spdlog/spdlog.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -13,6 +12,7 @@
 #include <sstream>
 #include <tuple>
 #include <iostream>
+#include <set>
 
 struct Vertex {
 	glm::vec4 position;
@@ -320,11 +320,11 @@ void updateCamera(GLFWwindow* win, Camera* camera) {
 	if (glfwGetKey(win, GLFW_KEY_Q)) camera->position += 0.05f * cameraUp;
 	if (glfwGetKey(win, GLFW_KEY_E)) camera->position -= 0.05f * cameraUp;
 
-	if (glfwGetKey(win, GLFW_KEY_LEFT)) camera->lookDirection *= glm::angleAxis(glm::radians(-0.5f), glm::vec3(0.f, 1.f, 0.f));
-	if (glfwGetKey(win, GLFW_KEY_RIGHT)) camera->lookDirection *= glm::angleAxis(glm::radians(0.5f), glm::vec3(0.f, 1.f, 0.f));
+	if (glfwGetKey(win, GLFW_KEY_LEFT)) camera->lookDirection *= glm::angleAxis(glm::radians(-2.5f), glm::vec3(0.f, 1.f, 0.f));
+	if (glfwGetKey(win, GLFW_KEY_RIGHT)) camera->lookDirection *= glm::angleAxis(glm::radians(2.5f), glm::vec3(0.f, 1.f, 0.f));
 
-	if (glfwGetKey(win, GLFW_KEY_UP)) camera->lookDirection *= glm::angleAxis(glm::radians(-0.5f), cameraRight);
-	if (glfwGetKey(win, GLFW_KEY_DOWN)) camera->lookDirection *= glm::angleAxis(glm::radians(0.5f), cameraRight);
+	if (glfwGetKey(win, GLFW_KEY_UP)) camera->lookDirection *= glm::angleAxis(glm::radians(-1.5f), cameraRight);
+	if (glfwGetKey(win, GLFW_KEY_DOWN)) camera->lookDirection *= glm::angleAxis(glm::radians(1.5f), cameraRight);
 
 }
 
@@ -394,6 +394,19 @@ void APIENTRY glDebugOutput(GLenum source,
 	std::cout << std::endl;
 }
 
+float dist(Camera* cam, const GameObject* go) {
+	return glm::length2(cam->position - go->transform.position);
+}
+
+void renderGameObjectsSorted(Camera* cam, std::vector<GameObject*> objs) {
+	std::vector<GameObject*> sorted(objs);
+	std::sort(sorted.begin(), sorted.end(), [&](const GameObject* a, const GameObject* b) { return dist(cam, a) > dist(cam, b); });
+
+	for (const auto& p: sorted) {
+		renderGameObject(cam, p);
+	}
+}
+
 int main() {
 
 	glfwInit();
@@ -416,7 +429,7 @@ int main() {
 		glEnable(GL_DEBUG_OUTPUT);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 		glDebugMessageCallback(glDebugOutput, nullptr);
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, nullptr, GL_TRUE);
 	}
 
 	glClearColor(0, 1.0f, 0, 1.0f);
@@ -434,6 +447,11 @@ int main() {
 	Material* mat = new Material();
 	mat->color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	mat->shader = sp;
+
+	Material* mat2 = new Material();
+	mat2->color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	mat2->shader = sp;
+
 
 	std::vector<Vertex> vertices = {
 		{ { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 1.0f }},
@@ -469,11 +487,18 @@ int main() {
 
 	Mesh* mesh = createMesh(vertices, indices, PrimitiveFormat::Triangles);
 
-	mat->color.a = 0.5f;
+	mat->color.a = 0.4f;
 
 	GameObject* prefab = createGameObject(mesh, mat);
 
 	std::vector<GameObject*> testObjs = createGameObjects(prefab, 10);
+
+
+	testObjs[0]->meshRenderer.material = mat2;
+	testObjs[1]->meshRenderer.material = mat2;
+	testObjs[2]->meshRenderer.material = mat2;
+	testObjs[3]->meshRenderer.material = mat2;
+	testObjs[4]->meshRenderer.material = mat2;
 
 //	GameObject* testObj = createGameObject(mesh, mat);
 //	GameObject* testObj2 = createGameObject(mesh, mat);
@@ -487,21 +512,21 @@ int main() {
 //	GameObject* testObj9 = createGameObject(mesh, mat);
 //	GameObject* testObj10 = createGameObject(mesh, mat);
 
-	testObjs[1]->transform.position.x = 2;
-	testObjs[2]->transform.position.x = -2;
-	testObjs[3]->transform.position.y = 2;
-	testObjs[4]->transform.position.y = -2;
+	testObjs[1]->transform.position.x = 1;
+	testObjs[2]->transform.position.x = -1;
+	testObjs[3]->transform.position.y = 1;
+	testObjs[4]->transform.position.y = -1;
 
-	testObjs[6]->transform.position.x = 2;
-	testObjs[7]->transform.position.x = -2;
-	testObjs[8]->transform.position.y = 2;
-	testObjs[9]->transform.position.y = -2;
+	testObjs[6]->transform.position.x = 1;
+	testObjs[7]->transform.position.x = -1;
+	testObjs[8]->transform.position.y = 1;
+	testObjs[9]->transform.position.y = -1;
 
-	testObjs[5]->transform.position.z = 2;
-	testObjs[6]->transform.position.z = 2;
-	testObjs[7]->transform.position.z = 2;
-	testObjs[8]->transform.position.z = 2;
-	testObjs[9]->transform.position.z = 2;
+	testObjs[5]->transform.position.z = -2;
+	testObjs[6]->transform.position.z = -2;
+	testObjs[7]->transform.position.z = -2;
+	testObjs[8]->transform.position.z = -2;
+	testObjs[9]->transform.position.z = -2;
 
 
 	Camera* camera = new Camera();
@@ -519,7 +544,7 @@ int main() {
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		renderGameObjects(camera, testObjs);
+		renderGameObjectsSorted(camera, testObjs);
 
 
 		glfwSwapBuffers(win);
